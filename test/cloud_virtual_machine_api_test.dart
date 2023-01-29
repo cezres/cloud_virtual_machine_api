@@ -64,7 +64,7 @@ void main() {
       securityGroupId = (await api.securityGroup
               .createSecurityGroupWithPolicies(
                   region: region.region,
-                  groupName: "放通全部端口-${DateTime.now().millisecondsSinceEpoch}",
+                  groupName: "放通全部端口-${dateTime.millisecondsSinceEpoch}",
                   groupDescription: groupDescription))
           .securityGroupId;
     } else {
