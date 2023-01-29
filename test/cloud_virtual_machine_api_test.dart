@@ -1,13 +1,20 @@
-# cloud_virtual_machine_api
+import 'dart:convert';
+import 'package:cloud_virtual_machine_api/tencentcloud/model/cvm_image.dart';
+import 'package:cloud_virtual_machine_api/tencentcloud/model/cvm_inquiry_price.dart';
+import 'package:cloud_virtual_machine_api/tencentcloud/model/cvm_instance_type_config.dart';
+import 'package:cloud_virtual_machine_api/tencentcloud/model/cvm_region.dart';
+import 'package:cloud_virtual_machine_api/tencentcloud/model/cvm_zone.dart';
+import 'package:crypto/crypto.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:cloud_virtual_machine_api/cloud_virtual_machine_api.dart';
 
-
-
-```dart
-    const secretId = "";
-    const secretKey = "";
-    final TencentCloudApi api =
+void main() {
+  const secretId = "";
+  const secretKey = "";
+  final TencentCloudApi api =
       TencentCloudApi(secretId: secretId, secretKey: secretKey);
 
+  test("tencent cloud api", (() async {
     final regions = await api.region.describeRegions();
 
     final CVMRegion region =
@@ -108,5 +115,5 @@
         .terminateInstances(region: region.region, instanceIds: instanceIds);
     await api.instance.describeInstancesStatus(
         region: region.region, instanceIds: instanceIds);
-
-```
+  }));
+}
