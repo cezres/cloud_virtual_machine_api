@@ -4,7 +4,8 @@ part 'cvm_image.g.dart';
 
 @JsonSerializable()
 class CVMImage {
-  const CVMImage(this.imageId, this.imageSize, this.platform, this.osName);
+  const CVMImage(this.imageId, this.imageSize, this.platform, this.osName,
+      this.imageState);
 
   @JsonKey(name: "ImageId")
   final String imageId; // img-9xqekomx
@@ -14,6 +15,8 @@ class CVMImage {
   final String platform; // CentOS
   @JsonKey(name: "OsName")
   final String osName; // CentOS Stream 9 64位
+  @JsonKey(name: "ImageState")
+  final String imageState;
 
   factory CVMImage.fromJson(Map<String, dynamic> json) =>
       _$CVMImageFromJson(json);

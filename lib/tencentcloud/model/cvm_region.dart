@@ -19,6 +19,6 @@ class CVMRegion {
 
   @override
   String toString() {
-    return "CVMRegion: $regionName $regionState";
+    return "$regionName $regionState";
   }
 }

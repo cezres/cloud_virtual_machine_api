@@ -20,8 +20,8 @@ CVMInstance _$CVMInstanceFromJson(Map<String, dynamic> json) => CVMInstance(
       json['OsName'] as String,
       json['LicenseType'] as String,
       json['StopChargingMode'] as String,
-      (json['PublicIpAddresses'] as List<dynamic>)
-          .map((e) => e as String)
+      (json['PublicIpAddresses'] as List<dynamic>?)
+          ?.map((e) => e as String)
           .toList(),
     );
 

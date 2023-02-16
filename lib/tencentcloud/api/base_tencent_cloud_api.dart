@@ -10,6 +10,7 @@ class BaseTencentCloudApi {
   final String secretId;
   final String secretKey;
   final String service; // cvm
+  bool isDebug = false;
 
   final Dio _dio = Dio();
 
@@ -63,13 +64,10 @@ class BaseTencentCloudApi {
     }
 
     buildHashedRequestPayload() {
-      // Lowercase(HexEncode(Hash.SHA256(RequestPayload)))
       var bytes = utf8.encode(payload);
       var digest = sha256.convert(bytes);
       return digest.toString().toLowerCase();
     }
-
-    // debugPrint("${buildHashedRequestPayload()}");
 
     const httpRequestMethod = "POST";
     const canonicalURI = "/";
@@ -80,9 +78,6 @@ class BaseTencentCloudApi {
     final canonicalRequest =
         '$httpRequestMethod\n$canonicalURI\n$canonicalQueryString\n$canonicalHeaders\n$signedHeaders\n$hashedRequestPayload';
 
-    // debugPrint(canonicalRequest);
-
-    // final date = DateTime.now();
     const algorithm = "TC3-HMAC-SHA256";
     final credentialScope = "$date/$service/tc3_request";
     final hashedCanonicalRequest = () {
@@ -94,10 +89,7 @@ class BaseTencentCloudApi {
     final stringToSign =
         '$algorithm\n$requestTimestamp\n$credentialScope\n$hashedCanonicalRequest';
 
-    // debugPrint(stringToSign);
-
     var key = utf8.encode("TC3$secretKey");
-    // var bytes = utf8.encode(date);
 
     var secretDate = Hmac(sha256, key).convert(utf8.encode(date)).bytes;
     var secretService =
@@ -110,12 +102,8 @@ class BaseTencentCloudApi {
         .toString()
         .toLowerCase();
 
-    // debugPrint(signature);
-
     var authorization =
         '$algorithm Credential=$secretId/$credentialScope, SignedHeaders=$signedHeaders, Signature=$signature';
-
-    // debugPrint(authorization);
 
     return authorization;
   }
@@ -177,22 +165,26 @@ class BaseTencentCloudApi {
     header["Authorization"] = authorization;
     header["X-TC-Language"] = "zh-CN";
 
-    // debugPrint("header - \n$header");
-
     try {
       final response = await _dio.post("https://$service.tencentcloudapi.com",
           data: payload, options: Options(headers: header, method: "POST"));
-      debugPrint("Request Action: $action");
-      if (newParams.isNotEmpty) {
-        debugPrint("Payload: $newParams");
+
+      if (isDebug) {
+        debugPrint("Request Action: $action");
+        if (newParams.isNotEmpty) {
+          debugPrint("Payload: $newParams");
+        }
+        debugPrint("Response: ${json.encode(response.data)}");
       }
-      debugPrint("Response: ${json.encode(response.data)}");
+
       if (response.data["Response"]["Error"] != null) {
         throw response.data["Response"]["Error"]["Message"];
       }
       return response;
     } catch (e) {
-      debugPrint("Error: $e");
+      if (isDebug) {
+        debugPrint("Error: $e");
+      }
       rethrow;
     }
   }

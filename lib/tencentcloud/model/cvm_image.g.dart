@@ -11,6 +11,7 @@ CVMImage _$CVMImageFromJson(Map<String, dynamic> json) => CVMImage(
       json['ImageSize'] as int,
       json['Platform'] as String,
       json['OsName'] as String,
+      json['ImageState'] as String,
     );
 
 Map<String, dynamic> _$CVMImageToJson(CVMImage instance) => <String, dynamic>{
@@ -18,4 +19,5 @@ Map<String, dynamic> _$CVMImageToJson(CVMImage instance) => <String, dynamic>{
       'ImageSize': instance.imageSize,
       'Platform': instance.platform,
       'OsName': instance.osName,
+      'ImageState': instance.imageState,
     };

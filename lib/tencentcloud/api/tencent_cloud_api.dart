@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_virtual_machine_api/tencentcloud/api/base_tencent_cloud_api.dart';
 import 'package:cloud_virtual_machine_api/tencentcloud/model/cvm_image.dart';
 import 'package:cloud_virtual_machine_api/tencentcloud/model/cvm_inquiry_price.dart';
@@ -7,6 +9,7 @@ import 'package:cloud_virtual_machine_api/tencentcloud/model/cvm_instance_type_c
 import 'package:cloud_virtual_machine_api/tencentcloud/model/cvm_region.dart';
 import 'package:cloud_virtual_machine_api/tencentcloud/model/cvm_security_group.dart';
 import 'package:cloud_virtual_machine_api/tencentcloud/model/cvm_zone.dart';
+import 'package:crypto/crypto.dart';
 
 ///
 /// https://console.cloud.tencent.com/api/explorer
@@ -29,6 +32,13 @@ class TencentCloudApi {
   TencentCloudInstanceApi instance;
   TencentCloudImageApi image;
   TencentCloudSecurityGroupApi securityGroup;
+
+  set isDebug(bool value) {
+    region.isDebug = value;
+    instance.isDebug = value;
+    image.isDebug = value;
+    securityGroup.isDebug = value;
+  }
 
   void setSecret({required String secretId, required String secretKey}) {
     region = TencentCloudRegionApi(secretId: secretId, secretKey: secretKey);
@@ -304,17 +314,26 @@ class TencentCloudImageApi extends BaseTencentCloudApi {
 
   /// 查看镜像列表
   Future<List<CVMImage>> describeImages(
-      {required String region, String? platform}) async {
+      {required String region,
+      String imageType = "PUBLIC_IMAGE",
+      String? platform,
+      String? imageName}) async {
     List<Map<String, dynamic>> filters = [
       {
         "Name": "image-type",
-        "Values": ["PUBLIC_IMAGE"]
+        "Values": [imageType]
       }
     ];
     if (platform != null) {
       filters.add({
         "Name": "platform",
         "Values": [platform]
+      });
+    }
+    if (imageName != null) {
+      filters.add({
+        "Name": "image-name",
+        "Values": [imageName]
       });
     }
     return requestResults(
@@ -325,6 +344,33 @@ class TencentCloudImageApi extends BaseTencentCloudApi {
         },
         decodeKey: "ImageSet",
         decoder: CVMImage.fromJson);
+  }
+
+  Future<void> createImage({
+    required String region,
+    required String instanceId,
+    required String imageName,
+  }) async {
+    await sendReeust(
+      action: "CreateImage",
+      region: region,
+      params: {
+        "InstanceId": instanceId,
+        "ImageName": imageName,
+        "ImageDescription": "cvm_helper-自动创建",
+      },
+    );
+  }
+
+  Future<void> deleteImages(
+      {required String region, required String imageId}) async {
+    await sendReeust(
+      action: "DeleteImages",
+      region: region,
+      params: {
+        "ImageIds": [imageId],
+      },
+    );
   }
 }
 
@@ -396,5 +442,40 @@ class TencentCloudSecurityGroupApi extends BaseTencentCloudApi {
           }
         },
         decoder: CVMSecurityGroup.fromJson);
+  }
+
+  Future<CVMSecurityGroup> createOpenAllPortSecurityGroup(
+      {required CVMRegion region}) async {
+    final securityGroups = await describeSecurityGroups(region: region.region);
+    final int securityGroupIndex = securityGroups.indexWhere((element) {
+      if (element.securityGroupName.isEmpty ||
+          element.securityGroupDesc.length != 32) {
+        return false;
+      }
+      final string =
+          (element.updateTime ?? element.createdTime).split(" ").first;
+
+      final bytes = utf8.encode(string);
+      var digest = md5.convert(bytes);
+      if (digest.toString() == element.securityGroupDesc) {
+        return true;
+      }
+      return false;
+    });
+    if (securityGroupIndex == -1) {
+      final DateTime dateTime = DateTime.now();
+      final dateString =
+          "${dateTime.year}-${dateTime.month > 10 ? "" : "0"}${dateTime.month}-${dateTime.day > 10 ? "" : "0"}${dateTime.day}";
+      final bytes = utf8.encode(dateString);
+      final digest = md5.convert(bytes);
+      final groupDescription = digest.toString();
+
+      return await createSecurityGroupWithPolicies(
+          region: region.region,
+          groupName: "放通全部端口-${dateTime.millisecondsSinceEpoch}",
+          groupDescription: groupDescription);
+    } else {
+      return securityGroups[securityGroupIndex];
+    }
   }
 }

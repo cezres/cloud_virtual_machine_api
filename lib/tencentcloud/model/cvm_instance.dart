@@ -51,7 +51,7 @@ class CVMInstance {
   final String stopChargingMode; // NOT_APPLICABLE
 
   @JsonKey(name: "PublicIpAddresses")
-  final List<String> publicIpAddresses;
+  final List<String>? publicIpAddresses;
 
   factory CVMInstance.fromJson(Map<String, dynamic> json) =>
       _$CVMInstanceFromJson(json);
